@@ -1,3 +1,4 @@
+<img width="2876" height="1670" alt="Screenshot 2025-11-16 165633" src="https://github.com/user-attachments/assets/a5ee5a01-c01d-466a-a4b8-f24d67124b2b" />
 🎧 Multiband Audio Equalizer using FIR Filters
 
 This project is a MATLAB-based multiband audio equalizer that uses FIR filters to adjust different frequency bands of an audio signal in real time. 
