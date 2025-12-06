@@ -1,0 +1,135 @@
+%% Step 1.2: Bass Filter Design for Audio Equalizer
+% Clear workspace
+clear; clc; close all;
+
+% Audio parameters (from Step 1.1)
+fs = 44100;        % Sample rate (44.1 kHz)
+N = 128;           % Filter order
+
+% Bass band specification: 20 Hz - 250 Hz
+fc_bass = 250;     % Cutoff frequency in Hz
+fc_norm = fc_bass / (fs/2);  % Normalized frequency (0 to 1)
+
+fprintf('=== Bass Filter Design ===\n');
+fprintf('Sample Rate: %d Hz\n', fs);
+fprintf('Filter Order: %d\n', N);
+fprintf('Bass Cutoff: %d Hz\n', fc_bass);
+fprintf('Normalized Cutoff: %.4f\n', fc_norm);
+
+%% Design FIR Low-pass Filter for Bass
+% Using Hamming window (good balance of performance)
+h_bass = fir1(N, fc_norm, 'low', hamming(N+1));
+
+fprintf('\n=== Filter Design Complete ===\n');
+fprintf('Filter Length: %d coefficients\n', length(h_bass));
+fprintf('First 5 coefficients: ');
+fprintf('%.6f ', h_bass(1:5));
+fprintf('\n');
+
+% Save filter coefficients
+save('bass_filter.mat', 'h_bass', 'fs', 'N', 'fc_bass');
+
+%% Analyze Filter Frequency Response
+% Calculate frequency response
+[H, f] = freqz(h_bass, 1, 1024, fs);
+
+% Plot magnitude response
+figure('Name', 'Bass Filter Analysis');
+subplot(2,1,1);
+plot(f, 20*log10(abs(H)), 'b-', 'LineWidth', 2);
+grid on;
+xlabel('Frequency (Hz)');
+ylabel('Magnitude (dB)');
+title('Bass Filter - Magnitude Response');
+xlim([0 1000]);  % Focus on bass range
+ylim([-60 5]);
+
+% Add cutoff frequency line
+hold on;
+line([fc_bass fc_bass], [-60 5], 'Color', 'r', 'LineStyle', '--', 'LineWidth', 1.5);
+text(fc_bass+20, -10, sprintf('Cutoff: %d Hz', fc_bass), 'Color', 'r');
+
+% Plot phase response
+subplot(2,1,2);
+plot(f, angle(H)*180/pi, 'g-', 'LineWidth', 2);
+grid on;
+xlabel('Frequency (Hz)');
+ylabel('Phase (degrees)');
+title('Bass Filter - Phase Response');
+xlim([0 1000]);
+
+fprintf('\n=== Filter Analysis ===\n');
+fprintf('At 100 Hz: %.2f dB\n', 20*log10(abs(H(round(100*1024/fs)))));
+fprintf('At 250 Hz: %.2f dB\n', 20*log10(abs(H(round(250*1024/fs)))));
+fprintf('At 500 Hz: %.2f dB\n', 20*log10(abs(H(round(500*1024/fs)))));
+
+%% Test Filter with Synthesized Audio
+% Create test signal with multiple frequencies
+duration = 2;  % 2 seconds
+t = (0:1/fs:duration-1/fs)';
+
+% Multi-tone test signal
+f1 = 100;   % Bass frequency (should pass)
+f2 = 440;   % Mid frequency (should be attenuated)
+f3 = 2000;  % High frequency (should be heavily attenuated)
+
+test_signal = sin(2*pi*f1*t) + 0.7*sin(2*pi*f2*t) + 0.5*sin(2*pi*f3*t);
+
+% Apply bass filter
+filtered_signal = filter(h_bass, 1, test_signal);
+
+% Play original and filtered (uncomment to hear)
+% fprintf('Playing original signal...\n');
+% sound(test_signal*0.3, fs); pause(duration+0.5);
+% fprintf('Playing filtered signal...\n');
+% sound(filtered_signal*0.3, fs); pause(duration+0.5);
+
+fprintf('\n=== Audio Test Complete ===\n');
+fprintf('Original signal: 100Hz + 440Hz + 2000Hz\n');
+fprintf('Filtered signal: Mostly 100Hz (bass preserved)\n');
+% Analyze Filter Frequency Response
+[H, f] = freqz(h_bass, 1, 1024, fs);
+
+figure('Name', 'Bass Filter Analysis');
+subplot(2,1,1);
+plot(f, 20*log10(abs(H)), 'b-', 'LineWidth', 2); grid on;
+xlabel('Frequency (Hz)');
+ylabel('Magnitude (dB)');
+title('Bass Filter - Magnitude Response');
+xlim([0 1000]);
+ylim([-60 5]);
+line([fc_bass fc_bass], [-60 5], 'Color', 'r', 'LineStyle', '--', 'LineWidth', 1.5);
+text(fc_bass+20, -10, sprintf('Cutoff: %d Hz', fc_bass), 'Color', 'r');
+
+subplot(2,1,2);
+plot(f, angle(H)*180/pi, 'g-', 'LineWidth', 2); grid on;
+xlabel('Frequency (Hz)');
+ylabel('Phase (degrees)');
+title('Bass Filter - Phase Response');
+xlim([0 1000]);
+% Create test signal with multiple frequencies
+duration = 2;
+t = (0:1/fs:duration-1/fs)';
+f1 = 100;   % Bass frequency
+f2 = 440;   % Mid frequency
+f3 = 2000;  % High frequency
+
+test_signal = sin(2*pi*f1*t) + 0.7*sin(2*pi*f2*t) + 0.5*sin(2*pi*f3*t);
+
+filtered_signal = filter(h_bass, 1, test_signal);
+
+% Play original and filtered signals (uncomment to hear)
+% sound(test_signal*0.3, fs); pause(duration+0.5);
+% sound(filtered_signal*0.3, fs); pause(duration+0.5);
+
+% Visualize
+figure;
+subplot(2,1,1);
+plot(t(1:500), test_signal(1:500)); title('Original Signal (First 500 samples)');
+xlabel('Time (s)');
+ylabel('Amplitude');
+
+subplot(2,1,2);
+plot(t(1:500), filtered_signal(1:500)); title('Filtered Signal (First 500 samples)');
+xlabel('Time (s)');
+ylabel('Amplitude');
